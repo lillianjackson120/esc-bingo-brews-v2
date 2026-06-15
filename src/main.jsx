@@ -3,8 +3,8 @@ import { createRoot } from 'react-dom/client';
 import './styles.css';
 
 const PASSCODE = 'bingoandbrewsYP';
-const STORE_KEY = 'esc-bingo-brews-state-v2';
-const LOCK_KEY = 'esc-bingo-brews-host-lock-v2';
+const STORE_KEY = 'esc-bingo-brews-state-v3';
+const LOCK_KEY = 'esc-bingo-brews-host-lock-v3';
 
 const DEFAULT_STATE = {
   mode: 'game',
@@ -24,7 +24,7 @@ const DEFAULT_STATE = {
       { name: 'Riviera Utilities', level: 'Team', logo: '/assets/riviera.jpg' },
       { name: 'Fairhope Brewing Company', level: 'Host', logo: '/assets/fairhope-brewing.webp' }
     ],
-    tableSponsors: ['Wilkins Miller','Social Magazine','Tracey Goens','Avizo','Bryant Bank','Daphne Utilities','Uniti Fiber','River Bank & Trust','Alabama Credit Union','Alabama Power'],
+    tableSponsors: ['Riviera Utilities','Wilkins Miller','Social Magazine','Tracey Goens','Bryant Bank','River Bank & Trust','Alabama Credit Union','Avizo'],
     breakText: 'Grab a drink, purchase raffle tickets, and hold on to your cards!',
     raffleText: 'Purchase tickets for a chance to win amazing prizes from our local sponsors.'
   }
@@ -49,21 +49,21 @@ function Home(){ return <div className="home"><div className="home-card"><div cl
 
 function Protected({children,type}){ const [ok,setOk]=useState(sessionStorage.getItem('bb-auth-'+type)==='yes'); const [pass,setPass]=useState(''); const [err,setErr]=useState(''); function submit(e){ e.preventDefault(); if(pass===PASSCODE){ sessionStorage.setItem('bb-auth-'+type,'yes'); setOk(true); } else setErr('That passcode did not work.'); } if(ok) return children; return <div className="home"><form className="login" onSubmit={submit}><h1>{type==='admin'?'Admin Settings':'Host Controls'}</h1><p>Enter the event passcode.</p><input value={pass} onChange={e=>setPass(e.target.value)} type="password" autoFocus/><button>Unlock</button>{err&&<p className="err">{err}</p>}<a onClick={()=>nav('home')}>Back to home</a></form></div> }
 
-function Audience(){ const [state]=useGameState(); const s=state.settings; const current=state.called[state.called.length-1]; const calledSet=new Set(state.called); const title = <><p className="eyebrow audience-eyebrow">{s.eventPrefix}</p><h1>{s.eventName}</h1><p className="benefit">Benefiting {s.beneficiary}</p></>;
+function Audience(){ const [state]=useGameState(); const s=state.settings; const current=state.called[state.called.length-1]; const calledSet=new Set(state.called);
   return <main className={'audience mode-'+state.mode}>
     {state.announcement && <div className="announce">{state.announcement}</div>}
-    <header className="aud-header"><Logo src="/assets/esyp-logo.png"/><div className="title-block">{title}</div><div className="presented"><span>Presented by</span><strong>{s.titleSponsor}</strong></div><Logo src="/assets/united-way.png"/></header>
+    <header className="aud-header"><Logo src="/assets/esyp-logo.png"/><div className="title-block"><h1>{s.eventPrefix} {s.eventName}</h1><p className="benefit">Presented by {s.titleSponsor} <span>•</span> Benefiting {s.beneficiary}</p></div><Logo src="/assets/united-way.png"/></header>
     {state.mode==='game' && <GameBoard state={state} current={current} calledSet={calledSet}/>} 
-    {state.mode==='hold' && <SpecialScreen icon="✋" title="Hold Your Cards!" text="A winner has been called. Please keep your cards available while we verify the winning card."/>}
-    {state.mode==='beer' && <SpecialScreen photo icon="🍺" title="Beer Break" text={s.breakText}/>} 
-    {state.mode==='raffle' && <SpecialScreen icon="🎟️" title="Raffle Time" text={s.raffleText}/>} 
-    {state.mode==='thanks' && <SpecialScreen icon="❤️" title="Thank you for joining us." text={`Thank you to our sponsors, players, volunteers, and ${s.beneficiary}.`}/>} 
+    {state.mode==='hold' && <SpecialScreen bg="/assets/hold-cards.jpg" icon="✋" title="Hold Your Cards!" text="A winner has been called. Please keep your cards available while we verify the winning card."/>}
+    {state.mode==='beer' && <SpecialScreen bg="/assets/beer-break.jpg" icon="🍺" title="Beer Break" text={s.breakText}/>} 
+    {state.mode==='raffle' && <SpecialScreen bg="/assets/raffle-time.jpg" icon="🎟️" title="Raffle Time" text={s.raffleText}/>} 
+    {state.mode==='thanks' && <SpecialScreen bg="/assets/thank-you.jpg" icon="❤️" title="Thank you for joining us." text={`Thank you to our sponsors, players, volunteers, and ${s.beneficiary}.`}/>} 
     <SponsorStrip sponsors={s.sponsors}/><Ticker names={s.tableSponsors}/>
   </main>
 }
 function GameBoard({state,current,calledSet}){ return <section className="game-grid"><aside className="current-card"><div className="small-label">Current Call</div><div className="current-call">{label(current)}</div><div className="pattern-pill">Current Pattern: <strong>{state.pattern}</strong></div><div className="recent"><span>Recent Calls</span><div>{state.called.slice(-6).reverse().map(n=><b key={n}>{label(n)}</b>)}</div></div></aside><div className="board">{cols.map(c=><div className="col" key={c.l}><div className="col-head">{c.l}</div>{Array.from({length:15},(_,i)=>c.s+i).map(n=><div key={n} className={'cell '+(n===current?'current':calledSet.has(n)?'called':'')}>{n}</div>)}</div>)}</div></section> }
-function SpecialScreen({icon,title,text,photo}){ return <section className={'special '+(photo?'with-photo':'')}><div className="photo-bg"/><div className="special-inner"><div className="special-icon">{icon}</div><h2>{title}</h2><p>{text}</p><small>Benefiting United Way of Baldwin County</small></div></section> }
-function SponsorStrip({sponsors}){ return <div className="sponsor-strip"><div className="sponsor-track">{[...sponsors,...sponsors].map((sp,i)=><div className="sponsor" key={sp.name+i}><img src={sp.logo}/><span>Thank you, {sp.name}!</span></div>)}</div></div> }
+function SpecialScreen({icon,title,text,bg}){ return <section className="special with-photo" style={{'--special-bg': `url(${bg})`}}><div className="photo-bg"/><div className="special-inner"><div className="special-icon">{icon}</div><h2>{title}</h2><p>{text}</p><small>Benefiting United Way of Baldwin County</small></div></section> }
+function SponsorStrip({sponsors}){ return <div className="sponsor-strip"><div className="sponsor-track">{[...sponsors,...sponsors].map((sp,i)=><div className="sponsor logo-only" key={sp.name+i}><img src={sp.logo} alt={sp.name}/></div>)}</div></div> }
 function Ticker({names}){ return <div className="ticker"><div className="ticker-track"><strong>Table Sponsors:</strong>&nbsp;{[...names,...names].map((n,i)=><span key={n+i}>{n} <em>•</em> </span>)}</div></div> }
 
 function Host(){ const [state,update]=useGameState(); const [note,setNote]=useState(''); const hostId=useRef(Math.random().toString(36).slice(2)); const [locked,setLocked]=useState(false); useEffect(()=>{ const now=Date.now(); const existing=JSON.parse(localStorage.getItem(LOCK_KEY)||'null'); if(existing && existing.id!==hostId.current && now-existing.time<90000) setLocked(true); const beat=()=>localStorage.setItem(LOCK_KEY,JSON.stringify({id:hostId.current,time:Date.now()})); beat(); const int=setInterval(beat,15000); return()=>clearInterval(int); },[]); const current=state.called[state.called.length-1]; function call(){ const n=nextNumber(state.called); if(n) update(st=>({...st,mode:'game',called:[...st.called,n]})); } function reset(){ if(confirm('Start a new round? This will clear all called numbers and reset the board.')) update(st=>({...st,called:[],mode:'game',announcement:''})); }
